@@ -1,0 +1,11 @@
+{
+  "forced_restart_preserved": true,
+  "records": 211,
+  "receipts": 1,
+  "appendonly": {
+    "appendonly": "yes"
+  },
+  "appendfsync": {
+    "appendfsync": "always"
+  }
+}

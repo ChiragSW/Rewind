@@ -1,0 +1,9 @@
+.venv
+.uv-cache
+.rewind-cache
+.env
+__pycache__
+.pytest_cache
+artifacts
+tests
+.git

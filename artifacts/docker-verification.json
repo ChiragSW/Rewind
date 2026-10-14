@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-10-14T17:56:42.236050+00:00",
+  "health": {
+    "status": "ok",
+    "database": "falkordb",
+    "payments": "simulated",
+    "model_configured": false
+  },
+  "backend_restart_exact_graph_preserved": true,
+  "http_snapshot": {
+    "graph_sha256": "7db9d701805be5bd74caa35c9682de13c98c14e425bc139616db04485ee737b4",
+    "records": 213,
+    "edges": 128,
+    "receipt_ids": [
+      "5be27d22-0194-447f-a2a6-4bd8b9b5900b"
+    ]
+  },
+  "database_forced_restart": {
+    "forced_restart_preserved": true,
+    "records": 211,
+    "receipts": 1,
+    "appendonly": {
+      "appendonly": "yes"
+    },
+    "appendfsync": {
+      "appendfsync": "always"
+    }
+  },
+  "tests": {
+    "passed": 26,
+    "failed": 0,
+    "seconds": 21.529
+  },
+  "api": {
+    "openapi_paths": 30,
+    "export_matches_running_server": true,
+    "unauthenticated_rejected": true,
+    "planner_operator_mutation_rejected": true,
+    "tenant_b_no_tenant_a_memory": true,
+    "cors_origins_checked": true,
+    "complete_story": "artifacts/api-demo.json",
+    "mode": "scripted"
+  },
+  "container_build": {
+    "default_python_base_build_completed": true,
+    "final_build_reused_verified_runtime": true,
+    "reason": "Dependency downloads in Docker were interrupted by TLS/network failures; final source was rebuilt over the previously verified Python runtime."
+  },
+  "document_links_valid": true,
+  "real_model_inference_tested": false,
+  "payments": "simulated",
+  "ui_built": false
+}

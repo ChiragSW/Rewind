@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-10-14T18:38:59.903051+00:00",
+  "runtime": {
+    "backend": "Windows host",
+    "database": "FalkorDB 4.20.7 in Docker",
+    "agent_provider": "codex_cli",
+    "codex_cli_version": "0.154.0",
+    "authentication": "existing ChatGPT login",
+    "model": "codex-cli-default",
+    "model_api_key_configured": false
+  },
+  "real_model_inference_tested": true,
+  "payments": "simulated",
+  "ui_built": false,
+  "live_story": {
+    "artifact": "artifacts/codex-live-demo.json",
+    "mode": "live",
+    "runs": 4,
+    "decisions": 23,
+    "stale_action_blocked": true,
+    "correct_receipts": 1,
+    "receipt_verified": true,
+    "usage_totals": {
+      "prompt_tokens": 248667,
+      "completion_tokens": 1559,
+      "total_tokens": 250226
+    }
+  },
+  "backend_restart_exact_graph_preserved": true,
+  "http_snapshot": {
+    "graph_sha256": "84e6dde1c3554f55ad53088d0fe45ef26b9dab93553bcef0f67587df1b61fe12",
+    "records": 220,
+    "edges": 124
+  },
+  "tests": {
+    "passed": 27,
+    "failed": 0,
+    "seconds": 36.113,
+    "inference_in_suite": "mocked SDK and CLI protocol fixtures"
+  },
+  "api": {
+    "openapi_paths": 30,
+    "running_tool_schemas_match_source": true,
+    "unauthenticated_rejected": true,
+    "planner_operator_mutation_rejected": true,
+    "tenant_b_isolated": true
+  },
+  "earlier_packaged_backend_verification": "artifacts/docker-verification.json",
+  "document_links_valid": true,
+  "scope": "One real-model fixture workflow, not a model-quality benchmark or automatic poison detection."
+}

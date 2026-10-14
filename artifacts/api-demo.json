@@ -1,0 +1,768 @@
+{
+  "mode": "scripted",
+  "synthetic": true,
+  "simulated_payments": true,
+  "repair": {
+    "id": "34fc38fb-3280-41eb-9c5b-49beb6c1d508",
+    "kind_label": "Repair",
+    "created_at": "2026-10-14T17:54:56.355604+00:00",
+    "source_id": "src-onboarding-incorrect",
+    "reason": "Reviewed source had incorrect routing",
+    "actor": "bbc3d433b910de13",
+    "idempotency_key": "api-demo-repair",
+    "state": "completed",
+    "affected": [
+      "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+      "mem-payment-plan-old",
+      "mem-routing-procedure-old",
+      "mem-routing-wrong",
+      "mem-supplier-name"
+    ],
+    "baseline": {
+      "71c5a786-bc43-419f-b2c9-7f6e278ec669": 1,
+      "mem-payment-plan-old": 1,
+      "mem-routing-procedure-old": 1,
+      "mem-routing-wrong": 1,
+      "mem-supplier-name": 2
+    },
+    "completed_at": "2026-10-14T17:54:56.378188+00:00",
+    "report": {
+      "invalidated": [
+        "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+        "mem-payment-plan-old",
+        "mem-routing-procedure-old",
+        "mem-routing-wrong"
+      ],
+      "preserved": [
+        "mem-supplier-name"
+      ],
+      "affected_runs": [
+        "4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+        "a5b50f11-d937-4ca5-b14a-b6f794cc954e"
+      ],
+      "stale_actions": [
+        "70f85a31-ce07-4781-8bb8-76628d9ddf7a"
+      ],
+      "review_needed": [],
+      "resumable_tasks": [
+        "task-invoice-1042"
+      ]
+    }
+  },
+  "preview": {
+    "source_id": "src-onboarding-incorrect",
+    "affected": [
+      "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+      "mem-payment-plan-old",
+      "mem-routing-procedure-old",
+      "mem-routing-wrong",
+      "mem-supplier-name"
+    ],
+    "invalidated": [
+      "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+      "mem-payment-plan-old",
+      "mem-routing-procedure-old",
+      "mem-routing-wrong"
+    ],
+    "preserved": [
+      "mem-supplier-name"
+    ],
+    "preview_only": true
+  },
+  "blocked": {
+    "error": {
+      "code": "STALE_ACTION",
+      "message": "Action must be currently approved",
+      "details": {}
+    }
+  },
+  "receipt": {
+    "action_id": "3f532e4e-a6f8-4c9d-b177-202185712c75",
+    "created_at": "2026-10-14T17:54:57.475111+00:00",
+    "id": "5be27d22-0194-447f-a2a6-4bd8b9b5900b",
+    "idempotency_key": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+    "kind_label": "Receipt",
+    "payload_hash": "f78df72d507a1e8983fd9c4d38a30ca921dbe35208483fe83697555fd3082c78",
+    "result": {
+      "amount_minor": 125000,
+      "currency": "USD",
+      "invoice_id": "INV-DEMO-1042",
+      "routing_token": "BANK-DEMO-CORRECT",
+      "status": "committed",
+      "supplier_id": "northstar"
+    },
+    "simulated": true
+  },
+  "procedure": {
+    "id": "2a785fa1-e6b9-4ff6-a97e-03c3d90f55a4",
+    "kind_label": "Memory",
+    "created_at": "2026-10-14T17:54:57.731838+00:00",
+    "kind": "procedural",
+    "subject": "northstar",
+    "predicate": "verified_payment_workflow",
+    "value": {
+      "steps": [
+        "read_task",
+        "read_memory",
+        "inspect_provenance",
+        "propose_action",
+        "await_approval",
+        "execute_action",
+        "read_receipt"
+      ]
+    },
+    "verified_receipt_id": "5be27d22-0194-447f-a2a6-4bd8b9b5900b",
+    "applicability": {
+      "workflow_version": 1
+    },
+    "valid_until": null,
+    "admitted": true,
+    "admitted_by": "bbc3d433b910de13",
+    "revision": 1,
+    "status": "active",
+    "historical_verified": false
+  },
+  "timeline": [
+    {
+      "endpoint": "/ready",
+      "status": 200,
+      "response": {
+        "status": "ready",
+        "paused_tenants": 0
+      }
+    },
+    {
+      "endpoint": "/api/demo/seed",
+      "status": 200,
+      "response": {
+        "tenant": "tenant_a",
+        "dataset": "northstar-v1",
+        "synthetic": true,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/tasks/task-invoice-1042/runs",
+      "status": 202,
+      "response": {
+        "id": "4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+        "kind_label": "Run",
+        "created_at": "2026-10-14T17:54:55.515014+00:00",
+        "task_id": "task-invoice-1042",
+        "role": "planner",
+        "mode": "scripted",
+        "model": "scripted",
+        "generation": 1,
+        "status": "queued",
+        "steps": 0
+      }
+    },
+    {
+      "endpoint": "/api/records/4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:55.515014+00:00",
+        "generation": 1,
+        "id": "4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "planner",
+        "status": "running",
+        "steps": 0,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:55.515014+00:00",
+        "generation": 1,
+        "id": "4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "planner",
+        "status": "running",
+        "steps": 4,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:55.515014+00:00",
+        "ended_at": "2026-10-14T17:54:55.898960+00:00",
+        "generation": 1,
+        "id": "4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "planner",
+        "status": "completed",
+        "steps": 6,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/tasks/task-invoice-1042/runs",
+      "status": 202,
+      "response": {
+        "id": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+        "kind_label": "Run",
+        "created_at": "2026-10-14T17:54:56.028362+00:00",
+        "task_id": "task-invoice-1042",
+        "role": "executor",
+        "mode": "scripted",
+        "model": "scripted",
+        "generation": 1,
+        "status": "queued",
+        "steps": 0
+      }
+    },
+    {
+      "endpoint": "/api/records/a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.028362+00:00",
+        "generation": 1,
+        "id": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "executor",
+        "status": "running",
+        "steps": 0,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.028362+00:00",
+        "generation": 1,
+        "id": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "executor",
+        "status": "awaiting_approval",
+        "steps": 5,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/actions",
+      "status": 200,
+      "response": {
+        "items": [
+          {
+            "created_at": "2026-10-14T17:54:56.214321+00:00",
+            "dependencies": {
+              "mem-invoice-amount": 1,
+              "mem-routing-wrong": 1,
+              "mem-supplier-name": 2
+            },
+            "generation": 1,
+            "id": "70f85a31-ce07-4781-8bb8-76628d9ddf7a",
+            "idempotency_key": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+            "kind_label": "Action",
+            "payload": {
+              "amount_minor": 125000,
+              "currency": "USD",
+              "invoice_id": "INV-DEMO-1042",
+              "routing_token": "BANK-DEMO-WRONG",
+              "supplier_id": "northstar"
+            },
+            "payload_hash": "0b68e57cd591e3db13f0cbd3e474e7d719cbf5209edb9213244a598a76eae7db",
+            "proof_hash": "2a45e9eb7c171d53e853154234d00253f640cfa6a070742b55b208c7a47a0ead",
+            "run_id": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+            "status": "pending",
+            "task_id": "task-invoice-1042",
+            "type": "simulated_payment"
+          }
+        ],
+        "total": 1,
+        "next_offset": null
+      }
+    },
+    {
+      "endpoint": "/api/actions/70f85a31-ce07-4781-8bb8-76628d9ddf7a/approve",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.214321+00:00",
+        "dependencies": {
+          "mem-invoice-amount": 1,
+          "mem-routing-wrong": 1,
+          "mem-supplier-name": 2
+        },
+        "generation": 1,
+        "id": "70f85a31-ce07-4781-8bb8-76628d9ddf7a",
+        "idempotency_key": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+        "kind_label": "Action",
+        "payload": {
+          "amount_minor": 125000,
+          "currency": "USD",
+          "invoice_id": "INV-DEMO-1042",
+          "routing_token": "BANK-DEMO-WRONG",
+          "supplier_id": "northstar"
+        },
+        "payload_hash": "0b68e57cd591e3db13f0cbd3e474e7d719cbf5209edb9213244a598a76eae7db",
+        "proof_hash": "2a45e9eb7c171d53e853154234d00253f640cfa6a070742b55b208c7a47a0ead",
+        "run_id": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+        "status": "approved",
+        "task_id": "task-invoice-1042",
+        "type": "simulated_payment",
+        "approval_id": "957250a4-2710-42da-b329-04fbfca00e56"
+      }
+    },
+    {
+      "endpoint": "/api/sources/src-onboarding-incorrect/revocation-preview",
+      "status": 200,
+      "response": {
+        "source_id": "src-onboarding-incorrect",
+        "affected": [
+          "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+          "mem-payment-plan-old",
+          "mem-routing-procedure-old",
+          "mem-routing-wrong",
+          "mem-supplier-name"
+        ],
+        "invalidated": [
+          "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+          "mem-payment-plan-old",
+          "mem-routing-procedure-old",
+          "mem-routing-wrong"
+        ],
+        "preserved": [
+          "mem-supplier-name"
+        ],
+        "preview_only": true
+      }
+    },
+    {
+      "endpoint": "/api/sources/src-onboarding-incorrect/revoke",
+      "status": 200,
+      "response": {
+        "id": "34fc38fb-3280-41eb-9c5b-49beb6c1d508",
+        "kind_label": "Repair",
+        "created_at": "2026-10-14T17:54:56.355604+00:00",
+        "source_id": "src-onboarding-incorrect",
+        "reason": "Reviewed source had incorrect routing",
+        "actor": "bbc3d433b910de13",
+        "idempotency_key": "api-demo-repair",
+        "state": "completed",
+        "affected": [
+          "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+          "mem-payment-plan-old",
+          "mem-routing-procedure-old",
+          "mem-routing-wrong",
+          "mem-supplier-name"
+        ],
+        "baseline": {
+          "71c5a786-bc43-419f-b2c9-7f6e278ec669": 1,
+          "mem-payment-plan-old": 1,
+          "mem-routing-procedure-old": 1,
+          "mem-routing-wrong": 1,
+          "mem-supplier-name": 2
+        },
+        "completed_at": "2026-10-14T17:54:56.378188+00:00",
+        "report": {
+          "invalidated": [
+            "71c5a786-bc43-419f-b2c9-7f6e278ec669",
+            "mem-payment-plan-old",
+            "mem-routing-procedure-old",
+            "mem-routing-wrong"
+          ],
+          "preserved": [
+            "mem-supplier-name"
+          ],
+          "affected_runs": [
+            "4b916e90-ab78-4e3b-9aed-3b9d67598a62",
+            "a5b50f11-d937-4ca5-b14a-b6f794cc954e"
+          ],
+          "stale_actions": [
+            "70f85a31-ce07-4781-8bb8-76628d9ddf7a"
+          ],
+          "review_needed": [],
+          "resumable_tasks": [
+            "task-invoice-1042"
+          ]
+        }
+      }
+    },
+    {
+      "endpoint": "/api/actions/70f85a31-ce07-4781-8bb8-76628d9ddf7a/execute",
+      "status": 409,
+      "response": {
+        "error": {
+          "code": "STALE_ACTION",
+          "message": "Action must be currently approved",
+          "details": {}
+        }
+      }
+    },
+    {
+      "endpoint": "/api/corrections",
+      "status": 201,
+      "response": {
+        "source": {
+          "id": "src-routing-correction-reviewed",
+          "kind_label": "Source",
+          "created_at": "2026-10-14T17:54:56.422435+00:00",
+          "title": "Reviewed correction",
+          "content": "BANK-DEMO-CORRECT",
+          "authority": "authoritative",
+          "status": "active",
+          "content_hash": "393ddf7ac2a25356467cc8261e39b4a49eae4a26db23284c898ee7d79c826678",
+          "admitted_by": "bbc3d433b910de13"
+        },
+        "memory": {
+          "id": "mem-routing-correct",
+          "kind_label": "Memory",
+          "created_at": "2026-10-14T17:54:56.422461+00:00",
+          "kind": "semantic",
+          "subject": "northstar",
+          "predicate": "payment_routing",
+          "value": "BANK-DEMO-CORRECT",
+          "verified_receipt_id": null,
+          "applicability": {},
+          "valid_until": null,
+          "status": "active",
+          "revision": 1,
+          "admitted": true,
+          "admitted_by": "bbc3d433b910de13",
+          "historical_verified": false
+        }
+      }
+    },
+    {
+      "endpoint": "/api/tasks/task-invoice-1042/runs",
+      "status": 202,
+      "response": {
+        "id": "dc956523-e2b8-4915-a361-1b80114dd05e",
+        "kind_label": "Run",
+        "created_at": "2026-10-14T17:54:56.442532+00:00",
+        "task_id": "task-invoice-1042",
+        "role": "planner",
+        "mode": "scripted",
+        "model": "scripted",
+        "generation": 2,
+        "status": "queued",
+        "steps": 0
+      }
+    },
+    {
+      "endpoint": "/api/records/dc956523-e2b8-4915-a361-1b80114dd05e",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.442532+00:00",
+        "generation": 2,
+        "id": "dc956523-e2b8-4915-a361-1b80114dd05e",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "planner",
+        "status": "running",
+        "steps": 0,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/dc956523-e2b8-4915-a361-1b80114dd05e",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.442532+00:00",
+        "generation": 2,
+        "id": "dc956523-e2b8-4915-a361-1b80114dd05e",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "planner",
+        "status": "running",
+        "steps": 3,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/dc956523-e2b8-4915-a361-1b80114dd05e",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.442532+00:00",
+        "ended_at": "2026-10-14T17:54:56.864150+00:00",
+        "generation": 2,
+        "id": "dc956523-e2b8-4915-a361-1b80114dd05e",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "planner",
+        "status": "completed",
+        "steps": 6,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/tasks/task-invoice-1042/runs",
+      "status": 202,
+      "response": {
+        "id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Run",
+        "created_at": "2026-10-14T17:54:56.932667+00:00",
+        "task_id": "task-invoice-1042",
+        "role": "executor",
+        "mode": "scripted",
+        "model": "scripted",
+        "generation": 2,
+        "status": "queued",
+        "steps": 0
+      }
+    },
+    {
+      "endpoint": "/api/records/1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.932667+00:00",
+        "generation": 2,
+        "id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "executor",
+        "status": "queued",
+        "steps": 0,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.932667+00:00",
+        "generation": 2,
+        "id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "executor",
+        "status": "running",
+        "steps": 2,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.932667+00:00",
+        "generation": 2,
+        "id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "executor",
+        "status": "awaiting_approval",
+        "steps": 5,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/actions",
+      "status": 200,
+      "response": {
+        "items": [
+          {
+            "approval_id": "957250a4-2710-42da-b329-04fbfca00e56",
+            "created_at": "2026-10-14T17:54:56.214321+00:00",
+            "dependencies": {
+              "mem-invoice-amount": 1,
+              "mem-routing-wrong": 1,
+              "mem-supplier-name": 2
+            },
+            "generation": 1,
+            "id": "70f85a31-ce07-4781-8bb8-76628d9ddf7a",
+            "idempotency_key": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+            "kind_label": "Action",
+            "payload": {
+              "amount_minor": 125000,
+              "currency": "USD",
+              "invoice_id": "INV-DEMO-1042",
+              "routing_token": "BANK-DEMO-WRONG",
+              "supplier_id": "northstar"
+            },
+            "payload_hash": "0b68e57cd591e3db13f0cbd3e474e7d719cbf5209edb9213244a598a76eae7db",
+            "proof_hash": "2a45e9eb7c171d53e853154234d00253f640cfa6a070742b55b208c7a47a0ead",
+            "repair_id": "34fc38fb-3280-41eb-9c5b-49beb6c1d508",
+            "run_id": "a5b50f11-d937-4ca5-b14a-b6f794cc954e",
+            "stale_reason": "SOURCE_REVOKED",
+            "status": "stale",
+            "task_id": "task-invoice-1042",
+            "type": "simulated_payment"
+          },
+          {
+            "created_at": "2026-10-14T17:54:57.337965+00:00",
+            "dependencies": {
+              "mem-invoice-amount": 1,
+              "mem-routing-correct": 1,
+              "mem-supplier-name": 3
+            },
+            "generation": 2,
+            "id": "3f532e4e-a6f8-4c9d-b177-202185712c75",
+            "idempotency_key": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+            "kind_label": "Action",
+            "payload": {
+              "amount_minor": 125000,
+              "currency": "USD",
+              "invoice_id": "INV-DEMO-1042",
+              "routing_token": "BANK-DEMO-CORRECT",
+              "supplier_id": "northstar"
+            },
+            "payload_hash": "f78df72d507a1e8983fd9c4d38a30ca921dbe35208483fe83697555fd3082c78",
+            "proof_hash": "6e216d21fba2dda5d4fe50b10a142d4d1d0e278e26166d33421fc83cd30c6cc2",
+            "run_id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+            "status": "pending",
+            "task_id": "task-invoice-1042",
+            "type": "simulated_payment"
+          }
+        ],
+        "total": 2,
+        "next_offset": null
+      }
+    },
+    {
+      "endpoint": "/api/actions/3f532e4e-a6f8-4c9d-b177-202185712c75/approve",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:57.337965+00:00",
+        "dependencies": {
+          "mem-invoice-amount": 1,
+          "mem-routing-correct": 1,
+          "mem-supplier-name": 3
+        },
+        "generation": 2,
+        "id": "3f532e4e-a6f8-4c9d-b177-202185712c75",
+        "idempotency_key": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Action",
+        "payload": {
+          "amount_minor": 125000,
+          "currency": "USD",
+          "invoice_id": "INV-DEMO-1042",
+          "routing_token": "BANK-DEMO-CORRECT",
+          "supplier_id": "northstar"
+        },
+        "payload_hash": "f78df72d507a1e8983fd9c4d38a30ca921dbe35208483fe83697555fd3082c78",
+        "proof_hash": "6e216d21fba2dda5d4fe50b10a142d4d1d0e278e26166d33421fc83cd30c6cc2",
+        "run_id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "status": "approved",
+        "task_id": "task-invoice-1042",
+        "type": "simulated_payment",
+        "approval_id": "989d1b41-793d-461a-9e78-e7dfda27c33b"
+      }
+    },
+    {
+      "endpoint": "/api/runs/1ed41341-f9ae-4d11-a03d-f1cf713825dc/continue",
+      "status": 202,
+      "response": {
+        "run_id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "status": "scheduled"
+      }
+    },
+    {
+      "endpoint": "/api/records/1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.932667+00:00",
+        "generation": 2,
+        "id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "role": "executor",
+        "status": "awaiting_approval",
+        "steps": 5,
+        "task_id": "task-invoice-1042"
+      }
+    },
+    {
+      "endpoint": "/api/records/1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+      "status": 200,
+      "response": {
+        "created_at": "2026-10-14T17:54:56.932667+00:00",
+        "ended_at": "2026-10-14T17:54:57.560991+00:00",
+        "generation": 2,
+        "id": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+        "kind_label": "Run",
+        "mode": "scripted",
+        "model": "scripted",
+        "receipt_verified": true,
+        "role": "executor",
+        "status": "completed",
+        "steps": 7,
+        "task_id": "task-invoice-1042",
+        "verified_receipt_id": "5be27d22-0194-447f-a2a6-4bd8b9b5900b"
+      }
+    },
+    {
+      "endpoint": "/api/receipts",
+      "status": 200,
+      "response": {
+        "items": [
+          {
+            "action_id": "3f532e4e-a6f8-4c9d-b177-202185712c75",
+            "created_at": "2026-10-14T17:54:57.475111+00:00",
+            "id": "5be27d22-0194-447f-a2a6-4bd8b9b5900b",
+            "idempotency_key": "1ed41341-f9ae-4d11-a03d-f1cf713825dc",
+            "kind_label": "Receipt",
+            "payload_hash": "f78df72d507a1e8983fd9c4d38a30ca921dbe35208483fe83697555fd3082c78",
+            "result": {
+              "amount_minor": 125000,
+              "currency": "USD",
+              "invoice_id": "INV-DEMO-1042",
+              "routing_token": "BANK-DEMO-CORRECT",
+              "status": "committed",
+              "supplier_id": "northstar"
+            },
+            "simulated": true
+          }
+        ],
+        "total": 1,
+        "next_offset": null
+      }
+    },
+    {
+      "endpoint": "/api/actions/3f532e4e-a6f8-4c9d-b177-202185712c75/learn-procedure",
+      "status": 201,
+      "response": {
+        "id": "2a785fa1-e6b9-4ff6-a97e-03c3d90f55a4",
+        "kind_label": "Memory",
+        "created_at": "2026-10-14T17:54:57.731838+00:00",
+        "kind": "procedural",
+        "subject": "northstar",
+        "predicate": "verified_payment_workflow",
+        "value": {
+          "steps": [
+            "read_task",
+            "read_memory",
+            "inspect_provenance",
+            "propose_action",
+            "await_approval",
+            "execute_action",
+            "read_receipt"
+          ]
+        },
+        "verified_receipt_id": "5be27d22-0194-447f-a2a6-4bd8b9b5900b",
+        "applicability": {
+          "workflow_version": 1
+        },
+        "valid_until": null,
+        "admitted": true,
+        "admitted_by": "bbc3d433b910de13",
+        "revision": 1,
+        "status": "active",
+        "historical_verified": false
+      }
+    }
+  ]
+}

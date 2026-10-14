@@ -1,0 +1,27 @@
+services:
+  falkordb:
+    image: falkordb/falkordb-server:v4.20.7
+    environment:
+      REDIS_ARGS: "--appendonly yes --appendfsync always"
+      BROWSER: "0"
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - rewind_data:/var/lib/falkordb/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+  backend:
+    build: .
+    env_file: .env
+    environment:
+      FALKORDB_HOST: falkordb
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      falkordb:
+        condition: service_healthy
+volumes:
+  rewind_data:
