@@ -360,6 +360,9 @@ export default function RewindShell() {
             positions={positions}
             setPositions={setPositions}
             affected={affected}
+            preview={preview}
+            togglePreview={togglePreview}
+            confirm={confirm}
           />
         ) : (
           <Workspace
@@ -389,7 +392,19 @@ export default function RewindShell() {
   )
 }
 
-function Graph({ nodesList, edgesList, state, selected, setSelected, positions, setPositions, affected }: any) {
+function Graph({
+  nodesList,
+  edgesList,
+  state,
+  selected,
+  setSelected,
+  positions,
+  setPositions,
+  affected,
+  preview,
+  togglePreview,
+  confirm,
+}: any) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 })
   const drag = useRef<{ kind: 'node' | 'pan' | null; id?: string; x: number; y: number; startX: number; startY: number }>({
@@ -409,6 +424,7 @@ function Graph({ nodesList, edgesList, state, selected, setSelected, positions, 
   })
 
   const chosen = nodes.find((node: any) => node.id === selected) ?? nodes[0] ?? demoNodes[0]
+  const auditEntry = preview?.auditRecords?.find((entry: any) => entry.memoryId === chosen.id)
   const edges = edgesList || demoEdges
   const upstream = edges
     .filter((edge: any) => edge.to === chosen.id)
@@ -488,8 +504,27 @@ function Graph({ nodesList, edgesList, state, selected, setSelected, positions, 
           </button>
           <button onClick={arrangeOrbit}>Arrange orbit</button>
           <button onClick={reset}>Reset layout</button>
+          <button
+            className={preview ? 'filter-active' : ''}
+            onClick={togglePreview}
+            style={{ fontWeight: 600, color: preview ? '#ff7875' : undefined }}
+          >
+            {preview ? 'Exit preview' : 'Preview rewind'}
+          </button>
         </div>
       </div>
+      {preview && (
+        <div className="preview-strip" style={{ margin: '0 0 14px 0' }}>
+          <AlertTriangle size={15} />
+          <span>
+            {preview.invalidated.length} memories invalidated; {preview.preserved.length} preserved by independent evidence.
+          </span>
+          <button onClick={confirm}>Confirm rewind</button>
+          <button onClick={togglePreview} aria-label="Cancel preview">
+            <X size={14} />
+          </button>
+        </div>
+      )}
       <div className="graph-layout">
         <section className="graph-stage">
           <div
@@ -579,11 +614,37 @@ function Graph({ nodesList, edgesList, state, selected, setSelected, positions, 
           </div>
           <InspectorList title="UPSTREAM EVIDENCE" items={upstream} setSelected={setSelected} />
           <InspectorList title="DOWNSTREAM DEPENDENTS" items={downstream} setSelected={setSelected} />
-          <div className="inspector-block">
-            <span className="eyebrow">RELATIONSHIP</span>
-            <strong>Selected node is part of the repair graph.</strong>
-            <small>Preview state highlights paths returned by the deterministic rewind evaluator.</small>
-          </div>
+          {auditEntry ? (
+            <div
+              className="inspector-block"
+              style={{
+                borderLeft: auditEntry.decision === 'invalidated' ? '3px solid #ff4d4f' : '3px solid #52c41a',
+                background: auditEntry.decision === 'invalidated' ? 'rgba(255, 77, 79, 0.08)' : 'rgba(82, 196, 26, 0.08)',
+                padding: '10px 12px',
+                borderRadius: '0 4px 4px 0',
+                margin: '12px 0',
+              }}
+            >
+              <span className="eyebrow" style={{ color: auditEntry.decision === 'invalidated' ? '#ff7875' : '#73d13d' }}>
+                REPAIR ENGINE AUDIT DECISION
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0' }}>
+                <span className={`state-marker ${auditEntry.decision === 'invalidated' ? 'invalidated' : 'valid'}`} />
+                <strong style={{ fontSize: '0.85rem', color: auditEntry.decision === 'invalidated' ? '#ff7875' : '#73d13d', letterSpacing: '0.04em' }}>
+                  {auditEntry.decision.toUpperCase().replace('_', ' ')}
+                </strong>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#ccc', margin: 0, lineHeight: 1.5 }}>
+                {auditEntry.reason}
+              </p>
+            </div>
+          ) : (
+            <div className="inspector-block">
+              <span className="eyebrow">RELATIONSHIP</span>
+              <strong>Selected node is part of the repair graph.</strong>
+              <small>Preview state highlights paths returned by the deterministic rewind evaluator.</small>
+            </div>
+          )}
         </aside>
       </div>
     </div>
@@ -652,11 +713,18 @@ function Workspace({
           title: item.title,
           detail: `${item.status} &middot; ${item.memoryIds?.join(', ')}`,
         }))
-      : state.events.map((event: any) => ({
-          id: event.id,
-          title: event.label,
-          detail: event.detail,
-        }))
+      : [
+          ...(preview?.auditRecords?.map((entry: any) => ({
+            id: `audit_${entry.memoryId}`,
+            title: `Repair Engine: ${entry.memoryId} → ${entry.decision.toUpperCase().replace('_', ' ')}`,
+            detail: entry.reason,
+          })) || []),
+          ...state.events.map((event: any) => ({
+            id: event.id,
+            title: event.label,
+            detail: event.detail,
+          })),
+        ]
 
   return (
     <div className="list-workspace">
@@ -677,16 +745,51 @@ function Workspace({
         </div>
 
         {preview && view === 'Sources' && (
-          <div className="preview-strip">
-            <AlertTriangle size={15} />
-            <span>
-              {preview.invalidated.length} memories would be invalidated; {preview.preserved.length} preserved. No mutation has occurred.
-            </span>
-            <button onClick={confirm}>Confirm rewind</button>
-            <button onClick={togglePreview} aria-label="Cancel preview">
-              <X size={14} />
-            </button>
-          </div>
+          <>
+            <div className="preview-strip">
+              <AlertTriangle size={15} />
+              <span>
+                {preview.invalidated.length} memories would be invalidated; {preview.preserved.length} preserved. No mutation has occurred.
+              </span>
+              <button onClick={confirm}>Confirm rewind</button>
+              <button onClick={togglePreview} aria-label="Cancel preview">
+                <X size={14} />
+              </button>
+            </div>
+
+            {preview.auditRecords && preview.auditRecords.length > 0 && (
+              <div style={{ margin: '14px 0', padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid #302c34', borderRadius: '3px' }}>
+                <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
+                  DETERMINISTIC AUDIT TRAIL ({preview.auditRecords.length} EVALUATED)
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {preview.auditRecords.map((entry: any) => (
+                    <div
+                      key={entry.memoryId}
+                      onClick={() => inspect(entry.memoryId)}
+                      style={{
+                        cursor: 'pointer',
+                        padding: '8px 12px',
+                        background: 'rgba(0,0,0,0.3)',
+                        borderLeft: entry.decision === 'invalidated' ? '3px solid #ff4d4f' : '3px solid #52c41a',
+                        borderRadius: '0 3px 3px 0',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <code style={{ fontSize: '0.8rem', color: '#d3ccd5' }}>{entry.memoryId}</code>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: entry.decision === 'invalidated' ? '#ff7875' : '#73d13d' }}>
+                          {entry.decision.toUpperCase().replace('_', ' ')}
+                        </span>
+                      </div>
+                      <small style={{ color: '#aaa', fontSize: '0.75rem', display: 'block', lineHeight: 1.4 }}>
+                        {entry.reason}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <div className="record-list">
@@ -716,6 +819,33 @@ function Workspace({
           <span>{state.runs?.length || 0}<small>runs</small></span>
           <span>{state.actions?.length || 0}<small>actions</small></span>
         </div>
+        {view === 'Sources' && preview && (
+          <div style={{ marginTop: '1.25rem' }}>
+            <span className="eyebrow">REPAIR SIMULATION STATS</span>
+            <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
+                <span style={{ color: '#aaa' }}>Source evaluated:</span>
+                <code style={{ fontSize: '0.75rem' }}>{preview.source}</code>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
+                <span style={{ color: '#aaa' }}>Invalidated:</span>
+                <strong style={{ color: '#ff7875' }}>{preview.invalidated.length}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
+                <span style={{ color: '#aaa' }}>Preserved:</span>
+                <strong style={{ color: '#73d13d' }}>{preview.preserved.length}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
+                <span style={{ color: '#aaa' }}>Stale runs:</span>
+                <span>{preview.staleRunIds.length}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
+                <span style={{ color: '#aaa' }}>Blocked actions:</span>
+                <span style={{ color: '#ff7875' }}>{preview.blockedActionIds.length}</span>
+              </div>
+            </div>
+          </div>
+        )}
         {view === 'Actions' && (
           <div style={{ marginTop: '1.25rem' }}>
             <span className="eyebrow">ACTION EXECUTION</span>
