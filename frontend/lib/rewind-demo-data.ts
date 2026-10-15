@@ -9,7 +9,7 @@ export type DemoMemory = {
   id: string
   title: string
   content: string
-  status: 'valid' | 'stale' | 'conflicted' | 'retracted'
+  status: 'valid' | 'stale' | 'conflicted' | 'retracted' | 'superseded'
   source: string
   updated: string
   evidence: DemoEvidence[]

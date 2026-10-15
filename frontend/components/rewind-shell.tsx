@@ -22,7 +22,7 @@ import {
   Radio,
 } from 'lucide-react'
 import { graphEdges as demoEdges, graphNodes as demoNodes, type DemoGraphEdge, type DemoGraphNode } from '@/lib/rewind-demo-data'
-import { applyRewind, previewRewind, recordEvent, seedState, validateAction, type RewindState } from '@/lib/rewind-domain'
+import { applyCorrection, applyRewind, previewRewind, recordEvent, seedState, validateAction, type RewindState } from '@/lib/rewind-domain'
 import { rewindApi, type BackendGraphResponse, type BackendState } from '@/lib/backend-client'
 
 type View = 'Overview' | 'Sources' | 'Memory graph' | 'Agent runs' | 'Actions' | 'Memory recall' | 'Audit log'
@@ -55,6 +55,16 @@ export default function RewindShell() {
   const [tenant, setTenant] = useState('tenant_a')
   const [activeNodes, setActiveNodes] = useState<DemoGraphNode[]>(demoNodes)
   const [activeEdges, setActiveEdges] = useState<DemoGraphEdge[]>(demoEdges)
+  const [showCorrectionModal, setShowCorrectionModal] = useState(false)
+  const [correctionForm, setCorrectionForm] = useState({
+    sourceId: 'src-routing-correction-reviewed',
+    sourceTitle: 'Reviewed supplier routing correction',
+    sourceContent: 'Fictional supplier confirms BANK-DEMO-CORRECT.',
+    memoryId: 'mem-routing-correct',
+    memoryTitle: 'Northstar verified routing token',
+    memoryContent: 'BANK-DEMO-CORRECT',
+    supersedesId: 'mem_a81e22',
+  })
 
   const [positions, setPositions] = useState<Record<string, Point>>(() =>
     Object.fromEntries(demoNodes.map((node) => [node.id, { x: node.x, y: node.y }]))
@@ -223,6 +233,101 @@ export default function RewindShell() {
     notify('Action completed safely')
   }
 
+  const submitCorrection = async () => {
+    if (isLiveMode && backendAvailable) {
+      try {
+        await rewindApi.applyCorrection({
+          source: {
+            id: correctionForm.sourceId,
+            title: correctionForm.sourceTitle,
+            content: correctionForm.sourceContent,
+            authority: 'authoritative',
+          },
+          memory: {
+            id: correctionForm.memoryId,
+            kind: 'semantic',
+            subject: 'northstar',
+            predicate: 'payment_routing',
+            value: correctionForm.memoryContent,
+            inputs: ['$source'],
+          },
+          supersedes_id: correctionForm.supersedesId || undefined,
+        })
+        await syncBackend()
+        setShowCorrectionModal(false)
+        notify(`Live correction committed: ${correctionForm.memoryId} admitted`)
+        return
+      } catch (err: any) {
+        notify(`Live correction failed: ${err.message}`)
+        return
+      }
+    }
+
+    setState((current) =>
+      applyCorrection(current, {
+        source: {
+          id: correctionForm.sourceId,
+          title: correctionForm.sourceTitle,
+          content: correctionForm.sourceContent,
+        },
+        memory: {
+          id: correctionForm.memoryId,
+          title: correctionForm.memoryTitle,
+          content: correctionForm.memoryContent,
+          supersedesId: correctionForm.supersedesId || undefined,
+        },
+      })
+    )
+
+    const newNode: DemoGraphNode = {
+      id: correctionForm.memoryId,
+      label: correctionForm.memoryTitle,
+      type: 'Memory',
+      status: 'valid',
+      x: 660,
+      y: 350,
+      details: correctionForm.memoryContent,
+      supportingEvidence: [correctionForm.sourceId],
+      dependencies: [correctionForm.sourceId],
+    }
+    const newSourceNode: DemoGraphNode = {
+      id: correctionForm.sourceId,
+      label: correctionForm.sourceTitle,
+      type: 'Source',
+      status: 'valid',
+      x: 90,
+      y: 460,
+      details: correctionForm.sourceContent,
+      supportingEvidence: [],
+      dependencies: [],
+    }
+
+    setActiveNodes((prev) => {
+      const filtered = prev.filter((n) => n.id !== correctionForm.memoryId && n.id !== correctionForm.sourceId)
+      const updated = filtered.map((n) =>
+        n.id === correctionForm.supersedesId
+          ? { ...n, status: 'invalidated' as const, details: `${n.details} (SUPERSEDED)` }
+          : n
+      )
+      return [...updated, newSourceNode, newNode]
+    })
+
+    setActiveEdges((prev) => [
+      ...prev,
+      { from: correctionForm.sourceId, to: correctionForm.memoryId, label: 'SUPPORTS' },
+    ])
+
+    setPositions((prev) => ({
+      ...prev,
+      [correctionForm.sourceId]: { x: 90, y: 460 },
+      [correctionForm.memoryId]: { x: 660, y: 350 },
+    }))
+
+    setSelected(correctionForm.memoryId)
+    setShowCorrectionModal(false)
+    notify(`Correction admitted: ${correctionForm.memoryId} is active`)
+  }
+
   return (
     <div className="rewind-app">
       <aside className={`rewind-rail ${sidebar ? 'open' : ''}`}>
@@ -363,6 +468,7 @@ export default function RewindShell() {
             preview={preview}
             togglePreview={togglePreview}
             confirm={confirm}
+            openCorrection={() => setShowCorrectionModal(true)}
           />
         ) : (
           <Workspace
@@ -376,11 +482,108 @@ export default function RewindShell() {
             togglePreview={togglePreview}
             confirm={confirm}
             action={action}
+            openCorrection={() => setShowCorrectionModal(true)}
             isLiveMode={isLiveMode}
             backendAvailable={backendAvailable}
           />
         )}
       </main>
+
+      {showCorrectionModal && (
+        <div className="rewind-modal-overlay" onClick={() => setShowCorrectionModal(false)}>
+          <div className="rewind-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="rewind-modal-head">
+              <div>
+                <span className="eyebrow">OPERATOR CORRECTION ADMISSION</span>
+                <h2>Admit Reviewed Memory Correction</h2>
+                <p>Admit verified evidence and update downstream agent dependencies.</p>
+              </div>
+              <button
+                className="icon-quiet"
+                onClick={() => setShowCorrectionModal(false)}
+                aria-label="Close dialog"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="rewind-modal-body">
+              <div className="rewind-field">
+                <label>Source Identifier</label>
+                <input
+                  value={correctionForm.sourceId}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, sourceId: e.target.value })}
+                  placeholder="e.g. src-routing-correction-reviewed"
+                />
+              </div>
+              <div className="rewind-field">
+                <label>Source Title / Description</label>
+                <input
+                  value={correctionForm.sourceTitle}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, sourceTitle: e.target.value })}
+                  placeholder="e.g. Reviewed supplier routing confirmation"
+                />
+              </div>
+              <div className="rewind-field">
+                <label>Evidence Excerpt</label>
+                <textarea
+                  rows={2}
+                  value={correctionForm.sourceContent}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, sourceContent: e.target.value })}
+                  placeholder="Verified authority source excerpt..."
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="rewind-field">
+                  <label>New Memory ID</label>
+                  <input
+                    value={correctionForm.memoryId}
+                    onChange={(e) => setCorrectionForm({ ...correctionForm, memoryId: e.target.value })}
+                    placeholder="e.g. mem-routing-correct"
+                  />
+                </div>
+                <div className="rewind-field">
+                  <label>Supersedes Memory ID</label>
+                  <select
+                    value={correctionForm.supersedesId}
+                    onChange={(e) => setCorrectionForm({ ...correctionForm, supersedesId: e.target.value })}
+                  >
+                    <option value="">None (stand-alone)</option>
+                    {state.memories?.map((m: any) => (
+                      <option key={m.id} value={m.id}>
+                        {m.id} ({m.title?.slice(0, 24)}...)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="rewind-field">
+                <label>Memory Title</label>
+                <input
+                  value={correctionForm.memoryTitle}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, memoryTitle: e.target.value })}
+                  placeholder="e.g. Northstar verified routing token"
+                />
+              </div>
+              <div className="rewind-field">
+                <label>Verified Memory Value</label>
+                <input
+                  value={correctionForm.memoryContent}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, memoryContent: e.target.value })}
+                  placeholder="e.g. BANK-DEMO-CORRECT"
+                />
+              </div>
+            </div>
+            <div className="rewind-modal-foot">
+              <button className="btn-secondary" onClick={() => setShowCorrectionModal(false)}>
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={submitCorrection}>
+                Commit Reviewed Correction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="rewind-toast">
@@ -404,6 +607,7 @@ function Graph({
   preview,
   togglePreview,
   confirm,
+  openCorrection,
 }: any) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 })
@@ -504,6 +708,7 @@ function Graph({
           </button>
           <button onClick={arrangeOrbit}>Arrange orbit</button>
           <button onClick={reset}>Reset layout</button>
+          <button onClick={openCorrection}>Admit correction</button>
           <button
             className={preview ? 'filter-active' : ''}
             onClick={togglePreview}
@@ -681,6 +886,7 @@ function Workspace({
   togglePreview,
   confirm,
   action,
+  openCorrection,
   isLiveMode,
   backendAvailable,
 }: any) {
@@ -737,11 +943,18 @@ function Workspace({
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter memories" />
             </div>
           )}
-          {view === 'Sources' && (
-            <button className="quiet-action" onClick={togglePreview}>
-              {preview ? 'Cancel preview' : 'Preview rewind'}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {view === 'Sources' && (
+              <button className="quiet-action" onClick={togglePreview}>
+                {preview ? 'Cancel preview' : 'Preview rewind'}
+              </button>
+            )}
+            {(view === 'Sources' || view === 'Memory recall') && (
+              <button className="quiet-action" onClick={openCorrection}>
+                Admit correction
+              </button>
+            )}
+          </div>
         </div>
 
         {preview && view === 'Sources' && (

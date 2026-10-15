@@ -54,3 +54,79 @@ export const applyRewind = (state: RewindState, source: string) => {
 }
 export const validateAction = (state: RewindState, actionId: string) => { const action = state.actions.find((item) => item.id === actionId); if (!action) return { ok: false, reason: 'Action not found.' }; const invalid = action.memoryIds.map((id) => state.memories.find((memory) => memory.id === id)).find((memory) => memory && memory.status !== 'valid'); return invalid ? { ok: false, reason: `Blocked by ${invalid.id}: ${invalid.title} is not valid.` } : { ok: true, reason: 'All required memories are valid.' } }
 export const recordEvent = (state: RewindState, label: string, detail: string, kind: RewindState['events'][number]['kind']): RewindState => ({ ...state, events: [...state.events, { id: `evt_${Date.now()}`, label, detail, kind }] })
+
+export type CorrectionInput = {
+  source: {
+    id: string
+    title: string
+    content?: string
+  }
+  memory: {
+    id: string
+    title: string
+    content: string
+    supersedesId?: string
+  }
+}
+
+export const applyCorrection = (state: RewindState, input: CorrectionInput): RewindState => {
+  const newEvidence = {
+    id: `ev_${Date.now()}`,
+    label: `${input.source.title} excerpt`,
+    source: input.source.id,
+    status: 'valid' as const,
+  }
+
+  const newMemory: DemoMemory = {
+    id: input.memory.id,
+    title: input.memory.title,
+    content: input.memory.content,
+    status: 'valid',
+    source: input.source.id,
+    updated: 'just now',
+    evidenceMode: 'all',
+    evidence: [newEvidence],
+  }
+
+  const updatedMemories = state.memories.map((mem) => {
+    if (input.memory.supersedesId && mem.id === input.memory.supersedesId) {
+      return { ...mem, status: 'superseded' as const }
+    }
+    return mem
+  })
+
+  const memories = [...updatedMemories.filter((m) => m.id !== input.memory.id), newMemory]
+  const sources = state.sources.includes(input.source.id)
+    ? state.sources
+    : [...state.sources, input.source.id]
+
+  const actions = state.actions.map((act) => {
+    if (input.memory.supersedesId && act.memoryIds.includes(input.memory.supersedesId)) {
+      return {
+        ...act,
+        status: 'pending' as const,
+        memoryIds: act.memoryIds.map((id) => (id === input.memory.supersedesId ? input.memory.id : id)),
+      }
+    }
+    return act
+  })
+
+  const events: DemoEvent[] = [
+    ...state.events,
+    {
+      id: `evt_corr_${Date.now()}`,
+      label: 'Correction admitted',
+      detail: `${input.memory.id} admitted · supersedes ${input.memory.supersedesId || 'none'}`,
+      kind: 'repair',
+    },
+  ]
+
+  return {
+    ...state,
+    sources,
+    memories,
+    actions,
+    events,
+  }
+}
+
