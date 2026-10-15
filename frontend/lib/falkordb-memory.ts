@@ -96,7 +96,7 @@ export class FalkorDBMemoryStore {
           factProps: serializeProps(fact as any),
           memoryId: memory.id,
           memoryProps: serializeProps(memory as any),
-        },
+        } as any,
       }
     )
   }
@@ -130,7 +130,7 @@ export class FalkorDBMemoryStore {
           runProps,
           retrievedIds: run.retrievedMemoryIds,
           contextIds: contextMemoryIds,
-        },
+        } as any,
       }
     )
   }
@@ -158,7 +158,7 @@ export class FalkorDBMemoryStore {
         actionProps,
         deps: memoryDeps,
         ...(runId ? { runId } : {}),
-      },
+      } as any,
     })
   }
 

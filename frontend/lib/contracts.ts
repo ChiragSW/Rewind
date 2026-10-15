@@ -60,7 +60,7 @@ export interface DerivedMemory {
   predicate?: string
   value?: unknown
   content?: string
-  status?: "active" | "unsupported" | "superseded" | "candidate" | "retracted" | "valid" | "stale"
+  status?: "active" | "unsupported" | "superseded" | "candidate" | "retracted" | "valid" | "stale" | "rewound"
   revision?: number
   evidence: EvidenceSupport
   derivedFromFactIds?: string[]

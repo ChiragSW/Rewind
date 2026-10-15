@@ -1,15 +1,51 @@
 import { demoData, type DemoAction, type DemoEvent, type DemoMemory, type DemoRun } from './rewind-demo-data'
+import { runRepairEngine, type AuditEntry } from './rewind-repair-engine'
 
 export type RewindState = { memories: DemoMemory[]; runs: DemoRun[]; actions: DemoAction[]; events: DemoEvent[]; sources: string[] }
+export type RewindPreviewImpact = {
+  source: string
+  affected: DemoMemory[]
+  invalidated: DemoMemory[]
+  preserved: DemoMemory[]
+  staleRunIds: string[]
+  blockedActionIds: string[]
+  auditRecords?: AuditEntry[]
+}
+
 export const seedState = (): RewindState => structuredClone(demoData) as unknown as RewindState
 export const validEvidence = (memory: RewindState['memories'][number], revoked: string) => memory.evidence.filter((evidence) => evidence.source !== revoked && evidence.status === 'valid')
-export const previewRewind = (state: RewindState, source: string) => {
+export const previewRewind = (state: RewindState, source: string): RewindPreviewImpact => {
+  const repairResult = runRepairEngine({
+    memories: state.memories.map((m) => ({
+      id: m.id,
+      status: m.status,
+      evidenceMode: m.evidenceMode,
+      evidence: m.evidence.map((e) => ({
+        id: e.id,
+        sourceId: e.source,
+        sourceStatus: e.status === 'valid' ? 'active' : 'revoked',
+      })),
+      derivedFromMemoryIds: (m as any).derivedFromMemoryIds,
+    })),
+    runs: state.runs.map((r) => ({ id: r.id, retrievedMemoryIds: r.retrievedMemoryIds })),
+    actions: state.actions.map((a) => ({ id: a.id, memoryIds: a.memoryIds, status: a.status })),
+    revokedSourceId: source,
+  })
+
+  const memoryMap = new Map(state.memories.map((m) => [m.id, m]))
   const affected = state.memories.filter((memory) => memory.evidence.some((evidence) => evidence.source === source))
-  const invalidated = affected.filter((memory) => memory.evidenceMode === 'all' ? validEvidence(memory, source).length < memory.evidence.length : validEvidence(memory, source).length === 0)
-  const preserved = affected.filter((memory) => !invalidated.includes(memory))
-  const staleRunIds = state.runs.filter((run) => run.retrievedMemoryIds.some((id) => invalidated.some((memory) => memory.id === id))).map((run) => run.id)
-  const blockedActionIds = state.actions.filter((action) => action.memoryIds.some((id) => invalidated.some((memory) => memory.id === id))).map((action) => action.id)
-  return { source, affected, invalidated, preserved, staleRunIds, blockedActionIds }
+  const invalidated = repairResult.invalidatedIds.map((id) => memoryMap.get(id)!).filter(Boolean)
+  const preserved = repairResult.preservedIds.map((id) => memoryMap.get(id)!).filter(Boolean)
+
+  return {
+    source,
+    affected,
+    invalidated,
+    preserved,
+    staleRunIds: repairResult.affectedRunIds,
+    blockedActionIds: repairResult.staleActionIds,
+    auditRecords: repairResult.auditRecords,
+  }
 }
 export const applyRewind = (state: RewindState, source: string) => {
   const impact = previewRewind(state, source)
