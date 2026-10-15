@@ -13,15 +13,28 @@ services:
       interval: 3s
       timeout: 2s
       retries: 30
+
   backend:
-    build: .
-    env_file: .env
+    build: ./backend
+    env_file: ./backend/.env
     environment:
       FALKORDB_HOST: falkordb
+      REWIND_CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
       falkordb:
         condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000
+      - BACKEND_URL=http://backend:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+
 volumes:
   rewind_data:
