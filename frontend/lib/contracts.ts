@@ -1,16 +1,24 @@
 export type IsoDateTime = string
 
-/** Evidence can be conjunctive (all) or alternative (any). */
+/**
+ * Evidence support can be conjunctive (all evidence required)
+ * or alternative (any independent evidence sufficient).
+ */
 export type EvidenceSupport =
-  | { mode: "all"; evidenceIds: string[] }
-  | { mode: "any"; evidenceIds: string[] }
+  | { mode: "all"; evidenceIds: string[]; justifications?: Array<{ id?: string; inputIds: string[] }> }
+  | { mode: "any"; evidenceIds: string[]; justifications?: Array<{ id?: string; inputIds: string[] }> }
 
 export interface Source {
   id: string
-  kind: "document" | "conversation" | "browser" | "system" | "other"
+  kind?: "document" | "conversation" | "browser" | "system" | "other"
   title: string
+  content?: string
+  contentHash?: string
+  authority?: "reviewed" | "authoritative"
+  status?: "active" | "revoked"
   uri?: string
-  capturedAt: IsoDateTime
+  capturedAt?: IsoDateTime
+  createdAt?: IsoDateTime
   metadata?: Record<string, unknown>
 }
 
@@ -18,7 +26,9 @@ export interface Evidence {
   id: string
   sourceId: string
   excerpt: string
-  capturedAt: IsoDateTime
+  contentHash?: string
+  capturedAt?: IsoDateTime
+  createdAt?: IsoDateTime
   locator?: { start?: number; end?: number; label?: string }
   metadata?: Record<string, unknown>
 }
@@ -27,15 +37,31 @@ export interface Fact {
   id: string
   subject: string
   predicate: string
-  object: string
+  object?: string
+  value?: unknown
   evidence: EvidenceSupport
+  status?: "active" | "invalidated" | "valid"
   createdAt: IsoDateTime
 }
 
 export interface DerivedMemory {
   id: string
-  kind: "preference" | "goal" | "decision" | "relationship" | "summary" | "other"
-  content: string
+  kind:
+    | "semantic"
+    | "plan"
+    | "procedural"
+    | "preference"
+    | "goal"
+    | "decision"
+    | "relationship"
+    | "summary"
+    | "other"
+  subject?: string
+  predicate?: string
+  value?: unknown
+  content?: string
+  status?: "active" | "unsupported" | "superseded" | "candidate" | "retracted" | "valid" | "stale"
+  revision?: number
   evidence: EvidenceSupport
   derivedFromFactIds?: string[]
   createdAt: IsoDateTime
@@ -44,38 +70,83 @@ export interface DerivedMemory {
 
 export interface AgentRun {
   id: string
-  status: "queued" | "running" | "completed" | "failed"
-  input: string
+  taskId?: string
+  role?: "planner" | "executor"
+  mode?: "live" | "scripted"
+  status:
+    | "queued"
+    | "running"
+    | "completed"
+    | "failed"
+    | "awaiting_approval"
+    | "awaiting_input"
+    | "interrupted"
+    | "restart_required"
+  input?: string
   retrievedMemoryIds: string[]
   /** The persistent memories actually supplied in this run's prompt/context. */
   contextMemoryIds?: string[]
   startedAt: IsoDateTime
   completedAt?: IsoDateTime
   error?: string
+  receiptVerified?: boolean
+}
+
+export interface PaymentPayloadContract {
+  supplier_id: string
+  invoice_id: string
+  amount_minor: number
+  currency: string
+  routing_token: string
 }
 
 export interface ProposedAction {
   id: string
-  kind: string
-  description: string
+  runId?: string
+  kind?: string
+  description?: string
+  payload?: PaymentPayloadContract | Record<string, unknown>
+  payloadHash?: string
   memoryIds: string[]
-  status: "proposed" | "approved" | "rejected" | "executed"
+  dependencies?: string[]
+  status:
+    | "proposed"
+    | "approved"
+    | "rejected"
+    | "executed"
+    | "pending"
+    | "stale"
+    | "committed"
+    | "blocked"
+  createdAt?: IsoDateTime
 }
 
 export interface RewindPreview {
   id: string
-  targetAt: IsoDateTime
+  sourceId?: string
+  targetAt?: IsoDateTime
   affectedMemoryIds: string[]
-  proposedActions: ProposedAction[]
-  createdAt: IsoDateTime
+  invalidatedMemoryIds?: string[]
+  preservedMemoryIds?: string[]
+  staleRunIds?: string[]
+  blockedActionIds?: string[]
+  proposedActions?: ProposedAction[]
+  createdAt?: IsoDateTime
 }
 
 export interface RepairResult {
   previewId: string
-  status: "planned" | "applied" | "failed"
+  repairId?: string
+  sourceId?: string
+  status: "planned" | "applied" | "failed" | "completed"
   restoredMemoryIds: string[]
   skippedMemoryIds: string[]
+  invalidatedMemoryIds?: string[]
+  preservedMemoryIds?: string[]
+  affectedRunIds?: string[]
+  staleActionIds?: string[]
   errors: string[]
+  createdAt?: IsoDateTime
 }
 
 export interface MemoryResponse {
@@ -98,17 +169,41 @@ export interface RewindResponse {
 export const CONTRACT_VERSION = "rewind.contracts.v1"
 export type ContractEnvelope<T> = { contractVersion: typeof CONTRACT_VERSION; data: T }
 
-export function makeEvidenceSupport(mode: EvidenceSupport["mode"], evidenceIds: readonly string[]): EvidenceSupport {
+export function makeEvidenceSupport(
+  mode: EvidenceSupport["mode"],
+  evidenceIds: readonly string[],
+  justifications?: Array<{ id?: string; inputIds: string[] }>
+): EvidenceSupport {
   const uniqueIds = [...new Set(evidenceIds)]
   if (uniqueIds.length === 0) throw new Error("Evidence support requires at least one evidence ID")
-  return { mode, evidenceIds: uniqueIds }
+  return { mode, evidenceIds: uniqueIds, justifications }
 }
 
 export function validateEvidenceSupport(support: EvidenceSupport, knownEvidenceIds: ReadonlySet<string>): void {
-  if (support.evidenceIds.length === 0) throw new Error("Facts and derived memories require supporting evidence")
-  if (new Set(support.evidenceIds).size !== support.evidenceIds.length) throw new Error("Evidence IDs must be unique")
+  if (!support || !Array.isArray(support.evidenceIds) || support.evidenceIds.length === 0) {
+    throw new Error("Facts and derived memories require supporting evidence")
+  }
+  if (new Set(support.evidenceIds).size !== support.evidenceIds.length) {
+    throw new Error("Evidence IDs must be unique")
+  }
   for (const id of support.evidenceIds) {
     if (!knownEvidenceIds.has(id)) throw new Error(`Supporting evidence does not exist: ${id}`)
+  }
+}
+
+export function validateMemoryProvenance(
+  memory: DerivedMemory,
+  knownEvidenceIds: ReadonlySet<string>,
+  knownFactIds?: ReadonlySet<string>
+): void {
+  if (!memory.id?.trim()) throw new Error("Memory id is required")
+  const content = memory.content ?? (memory.value !== undefined ? JSON.stringify(memory.value) : "")
+  if (!content.trim()) throw new Error("Derived memories require content or value")
+  validateEvidenceSupport(memory.evidence, knownEvidenceIds)
+  if (knownFactIds && memory.derivedFromFactIds) {
+    for (const factId of memory.derivedFromFactIds) {
+      if (!knownFactIds.has(factId)) throw new Error(`Derived memory references an unknown fact: ${factId}`)
+    }
   }
 }
 
@@ -125,20 +220,17 @@ export function validateContractGraph(input: MemoryResponse): void {
     if (!sourceIds.has(item.sourceId)) throw new Error(`Evidence references an unknown source: ${item.sourceId}`)
   }
   for (const fact of input.facts) {
-    if (!fact.subject.trim() || !fact.predicate.trim() || !fact.object.trim()) throw new Error("Facts require subject, predicate, and object")
+    if (!fact.subject.trim() || !fact.predicate.trim()) throw new Error("Facts require subject and predicate")
     validateEvidenceSupport(fact.evidence, evidenceIds)
   }
   for (const memory of input.memories) {
-    if (!memory.id.trim() || !memory.content.trim()) throw new Error("Derived memories require id and content")
-    validateEvidenceSupport(memory.evidence, evidenceIds)
-    for (const factId of memory.derivedFromFactIds ?? []) {
-      if (!factIds.has(factId)) throw new Error(`Derived memory references an unknown fact: ${factId}`)
-    }
+    validateMemoryProvenance(memory, evidenceIds, factIds)
   }
 }
 
 export function validateAgentRun(run: AgentRun, knownMemoryIds: ReadonlySet<string>): void {
-  if (!run.input.trim()) throw new Error("Agent run input is required")
+  const hasTaskOrInput = Boolean(run.input?.trim() || run.taskId?.trim())
+  if (!hasTaskOrInput) throw new Error("Agent run input or taskId is required")
   for (const memoryId of run.retrievedMemoryIds) {
     if (!knownMemoryIds.has(memoryId)) throw new Error(`Run retrieved an unknown memory: ${memoryId}`)
   }
@@ -147,9 +239,11 @@ export function validateAgentRun(run: AgentRun, knownMemoryIds: ReadonlySet<stri
 }
 
 export function validateProposedAction(action: ProposedAction, knownMemoryIds: ReadonlySet<string>): void {
-  if (!action.description.trim()) throw new Error("Proposed action description is required")
-  if (new Set(action.memoryIds).size !== action.memoryIds.length) throw new Error("Action memory dependencies must be unique")
-  for (const memoryId of action.memoryIds) {
+  const hasDescriptionOrPayload = Boolean(action.description?.trim() || action.payload)
+  if (!hasDescriptionOrPayload) throw new Error("Proposed action description or payload is required")
+  const memoryDeps = action.memoryIds ?? action.dependencies ?? []
+  if (new Set(memoryDeps).size !== memoryDeps.length) throw new Error("Action memory dependencies must be unique")
+  for (const memoryId of memoryDeps) {
     if (!knownMemoryIds.has(memoryId)) throw new Error(`Action dependency does not exist: ${memoryId}`)
   }
 }
@@ -158,7 +252,9 @@ export function validateRewindResponse(response: RewindResponse, knownMemoryIds:
   for (const memoryId of response.preview.affectedMemoryIds) {
     if (!knownMemoryIds.has(memoryId)) throw new Error(`Preview references an unknown memory: ${memoryId}`)
   }
-  for (const action of response.preview.proposedActions) validateProposedAction(action, knownMemoryIds)
+  for (const action of response.preview.proposedActions ?? []) {
+    validateProposedAction(action, knownMemoryIds)
+  }
   if (response.repair) {
     if (response.repair.previewId !== response.preview.id) throw new Error("Repair result must reference its preview")
     const restored = new Set(response.repair.restoredMemoryIds)
