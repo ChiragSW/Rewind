@@ -1,17 +1,7 @@
-"""Generate private local identities; never overwrite an existing .env."""
-import json
+"""Root forwarder to backend/scripts/init_env.py"""
 import pathlib
-import secrets
+import subprocess
+import sys
 
-root = pathlib.Path(__file__).resolve().parents[1]
-target = root / ".env"
-if target.exists():
-    print("Existing .env retained")
-else:
-    identities = {secrets.token_urlsafe(32): {"tenant": tenant, "role": role}
-                  for tenant, role in [("tenant_a", "operator"), ("tenant_a", "planner"), ("tenant_a", "executor"),
-                                       ("tenant_b", "operator")]}
-    text = (root / ".env.example").read_text(encoding="utf-8").splitlines()
-    text = ["REWIND_IDENTITIES=" + json.dumps(identities) if line.startswith("REWIND_IDENTITIES=") else line for line in text]
-    target.write_text("\n".join(text) + "\n", encoding="utf-8")
-    print("Created private .env. Add MODEL_API_KEY and MODEL_NAME for live agents.")
+backend_script = pathlib.Path(__file__).resolve().parents[1] / "backend" / "scripts" / "init_env.py"
+sys.exit(subprocess.call([sys.executable, str(backend_script)] + sys.argv[1:]))
